@@ -1,1 +1,7 @@
 node_modules
+# Logs
+*.log
+
+# Session/QR files
+/bot_sessions/
+bot.qr.png
