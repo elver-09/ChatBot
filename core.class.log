@@ -2,16 +2,16 @@
   key: {
     remoteJid: '27908882055413@lid',
     fromMe: false,
-    id: '3A6232C415786362234D',
+    id: '3AA672CC446BE898D9A4',
     participant: undefined
   },
-  messageTimestamp: 1776800792,
+  messageTimestamp: 1776802997,
   pushName: '𝑬𝒍𝒗𝒆𝒓 𝑪𝑷 👨‍💻',
   broadcast: false,
   message: Message {
     locationMessage: LocationMessage {
-      degreesLatitude: -12.008843421936035,
-      degreesLongitude: -77.1024169921875,
+      degreesLatitude: -12.008939743041992,
+      degreesLongitude: -77.10244750976562,
       jpegThumbnail: [Uint8Array],
       contextInfo: [ContextInfo]
     },
@@ -21,39 +21,12 @@
       messageSecret: [Uint8Array]
     }
   },
-  body: '_event_location__c5ed19e6-b10e-4d0a-a8d6-7d9e94c3c221',
+  body: '_event_location__e0bda191-be96-4f2f-ace8-cf0970abddec',
   from: '27908882055413@lid'
 }
-[ERROR ID (fef9d279-65e6-420a-8880-d7370d13a556)]:  Error: Timed Out
-    at /Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Utils/generics.js:137:32 {
-  data: {
-    stack: 'Error\n' +
-      '    at promiseTimeout (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Utils/generics.js:132:19)\n' +
-      '    at waitForMessage (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/socket.js:114:53)\n' +
-      '    at query (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/socket.js:136:22)\n' +
-      '    at getUSyncDevices (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js:166:30)\n' +
-      '    at /Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js:357:53\n' +
-      '    at Object.transaction (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Utils/auth-utils.js:136:32)\n' +
-      '    at relayMessage (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js:279:30)\n' +
-      '    at Object.sendMessage (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js:652:23)\n' +
-      '    at async CoreClass.sendProviderAndSave (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@bot-whatsapp/bot/lib/bundle.bot.cjs:1561:21)\n' +
-      '    at async /Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@bot-whatsapp/bot/lib/bundle.bot.cjs:1371:21'
-  },
-  isBoom: true,
-  isServer: false,
-  output: {
-    statusCode: 408,
-    payload: {
-      statusCode: 408,
-      error: 'Request Time-out',
-      message: 'Timed Out'
-    },
-    headers: {}
-  }
-}
 [QUEUE_SE_ENVIO]:  {
-  ref: 'ans_f09b98e7-2cc3-4a1a-b48c-18a701461c45',
-  keyword: 'key_92c659b1-7ea4-42ef-94ad-c3588749d6cf',
+  ref: 'ans_d6c50f28-5e86-42a2-8867-6010b4db9ced',
+  keyword: 'key_008354ea-c5de-4f52-b25e-334b9d8f9f4f',
   answer: '__call_action__',
   options: {
     media: null,
@@ -67,76 +40,5 @@
     keyword: {},
     callback: true
   },
-  refSerialize: 'cecfc82de4c821e3f7d341f1c3414908'
-}
-[handleMsg]:  {
-  key: {
-    remoteJid: '27908882055413@lid',
-    fromMe: false,
-    id: '3A99DB329BFCC5D7D183',
-    participant: undefined
-  },
-  messageTimestamp: 1776801074,
-  pushName: '𝑬𝒍𝒗𝒆𝒓 𝑪𝑷 👨‍💻',
-  broadcast: false,
-  message: Message {
-    locationMessage: LocationMessage {
-      degreesLatitude: -12.008822441101074,
-      degreesLongitude: -77.1024169921875,
-      jpegThumbnail: [Uint8Array],
-      contextInfo: [ContextInfo]
-    },
-    messageContextInfo: MessageContextInfo {
-      deviceListMetadata: [DeviceListMetadata],
-      deviceListMetadataVersion: 2,
-      messageSecret: [Uint8Array]
-    }
-  },
-  body: '_event_location__10fb77cd-0576-47fc-b873-93cc77594ed2',
-  from: '27908882055413@lid'
-}
-[ERROR ID (17c4532d-3067-44f0-93d7-696ec1689a86)]:  Error: Timed Out
-    at /Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Utils/generics.js:137:32 {
-  data: {
-    stack: 'Error\n' +
-      '    at promiseTimeout (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Utils/generics.js:132:19)\n' +
-      '    at waitForMessage (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/socket.js:114:53)\n' +
-      '    at query (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/socket.js:136:22)\n' +
-      '    at getUSyncDevices (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js:166:30)\n' +
-      '    at /Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js:357:53\n' +
-      '    at Object.transaction (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Utils/auth-utils.js:136:32)\n' +
-      '    at relayMessage (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js:279:30)\n' +
-      '    at Object.sendMessage (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js:652:23)\n' +
-      '    at async CoreClass.sendProviderAndSave (/Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@bot-whatsapp/bot/lib/bundle.bot.cjs:1561:21)\n' +
-      '    at async /Users/PROYECTOS/CHATBOTT/base-baileys-memory/node_modules/@bot-whatsapp/bot/lib/bundle.bot.cjs:1371:21'
-  },
-  isBoom: true,
-  isServer: false,
-  output: {
-    statusCode: 408,
-    payload: {
-      statusCode: 408,
-      error: 'Request Time-out',
-      message: 'Timed Out'
-    },
-    headers: {}
-  }
-}
-[QUEUE_SE_ENVIO]:  {
-  ref: 'ans_f09b98e7-2cc3-4a1a-b48c-18a701461c45',
-  keyword: 'key_92c659b1-7ea4-42ef-94ad-c3588749d6cf',
-  answer: '__call_action__',
-  options: {
-    media: null,
-    buttons: [],
-    capture: false,
-    child: null,
-    delay: 0,
-    idle: null,
-    ref: null,
-    nested: [],
-    keyword: {},
-    callback: true
-  },
-  refSerialize: 'cecfc82de4c821e3f7d341f1c3414908'
+  refSerialize: 'a7dc91a19210ad9d44cca2ff47029108'
 }

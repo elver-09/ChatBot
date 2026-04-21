@@ -6,6 +6,7 @@ const { updateTrainylOrderLocation, getOrdersForToday, markWhatsAppAsSent } = re
 
 const RECENT_TTL_MS = 30 * 60 * 1000;
 const recentNotifiedPhones = new Map();
+let globalAdapterProvider = null; // 🔴 GLOBAL para acceso desde flows
 
 process.on('unhandledRejection', (reason) => {
     console.error('❌ Rechazo no manejado:', reason);
@@ -117,7 +118,7 @@ const resolvePhoneForLocation = async (ctx = {}) => {
 // 1. FLUJO: RESPUESTA CUANDO EL CLIENTE ENVÍA UBICACIÓN
 // =========================================================
 const flowUbicacionCliente = addKeyword(EVENTS.LOCATION)
-    .addAction(async (ctx, { flowDynamic }) => {
+    .addAction(async (ctx) => {
         try {
             // --- EXTRAER EL NÚMERO REAL ---
             const phone = await resolvePhoneForLocation(ctx);
@@ -142,25 +143,22 @@ const flowUbicacionCliente = addKeyword(EVENTS.LOCATION)
             }
 
             const { degreesLatitude: lat, degreesLongitude: lon } = location;
+            const jid = `${phone}@c.us`;
 
-            // ✅ RESPONDER AL CLIENTE (captura errores pero continúa)
-            try {
-                await flowDynamic('⏳ Guardando tu ubicación en el sistema de Trainyl...');
-                await flowDynamic([
-                    `✅ ¡Gracias por compartir tu ubicación!`,
-                    `Tu ubicación ha sido registrada en nuestro sistema.`,
-                    `🚚 El repartidor usará esta información para encontrarte. ¡Nos vemos pronto!`
-                ]);
-            } catch (err) {
-                console.warn('⚠️ Error al enviar confirmación:', err?.message || err);
-            }
-
-            // 🔄 PROCESAR ODOO EN BACKGROUND (sin await = no bloquea al cliente)
+            // ✅ RESPONDER AL CLIENTE CON adapterProvider (igual que CRON)
+            console.log('📨 Enviando confirmación con adapterProvider...');
+            
+            // 🔄 PROCESAR ODOO EN BACKGROUND (sin await = no bloquea)
             (async () => {
                 try {
                     const order = await updateTrainylOrderLocation(phone, lat, lon);
                     if (order) {
                         console.log(`✅ Ubicación ACTUALIZADA en Odoo para orden: ${order.order_number}`);
+                        
+                        // Enviar confirmación DESPUÉS de actualizar Odoo
+                        if (globalAdapterProvider) {
+                            await globalAdapterProvider.sendText(jid, '✅ ¡Gracias por compartir tu ubicación!\n\nTu ubicación ha sido registrada en nuestro sistema.\n\n🚚 El repartidor usará esta información para encontrarte. ¡Nos vemos pronto!');
+                        }
                     } else {
                         console.log(`⚠️ Odoo no encontró orden activa para: ${phone}`);
                     }
@@ -171,11 +169,6 @@ const flowUbicacionCliente = addKeyword(EVENTS.LOCATION)
 
         } catch (error) {
             console.error('Error al procesar ubicación:', error || 'sin detalle');
-            try {
-                await flowDynamic('❌ Hubo un error al procesar tu ubicación, pero fue registrada.');
-            } catch (e) {
-                console.error('No se pudo enviar mensaje de error al cliente:', e);
-            }
         }
     });
 
@@ -187,6 +180,7 @@ const main = async () => {
     
     // --- AQUÍ SE CONFIGURA EL LOG SILENCIOSO ---
     const adapterProvider = createProvider(BaileysProvider);
+    globalAdapterProvider = adapterProvider; // 🔴 GUARDAR EN GLOBAL
 
     const adapterFlow = createFlow([flowUbicacionCliente]);
 
