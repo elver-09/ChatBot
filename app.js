@@ -208,8 +208,10 @@ const main = async () => {
                     const finalPhone = phoneStr.startsWith('51') ? phoneStr : `51${phoneStr}`;
                     const jid = `${finalPhone}@s.whatsapp.net`;
                     const nombre = (order.fullname || 'Cliente').split(' ')[0];
+                    const address = order.address || 'No especificada';
+                    const district = order.district || 'No especificado';
 
-                    const mensaje = `¡Hola ${nombre}! 👋\nSomos el equipo de entregas de *Trainyl*.\n\nHoy tenemos programada la entrega de tu pedido *${order.order_number}*.\n\nPor favor envíanos tu *Ubicación Actual* usando el botón del clip (📎). 🚚💨`;
+                    const mensaje = `¡Hola ${nombre}! 👋\nSomos el equipo de entregas de *Trainyl* 🚚\nEstamos preparando la entrega de tu pedido *${order.order_number}*.\n📌 *Dirección registrada:* ${address}\n📌 *Distrito:* ${district}\n📍 Para que nuestro motorizado te ubique fácilmente, por favor comparte tu ubicación usando el botón 📎\n¡Gracias! 💚\n— Equipo de entregas Trainyl`;
                     
                     try {
                         await adapterProvider.sendText(jid, mensaje);

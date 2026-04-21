@@ -32,23 +32,32 @@ class TrainylBotController(http.Controller):
         if not short_phone:
             return {'status': 'error', 'message': 'No phone provided'}
 
-        # Buscamos la orden:
+        # Buscamos TODAS las órdenes del cliente que NO tengan ubicación:
         # Usamos 'ilike' con '%' para que encuentre el número aunque en Odoo esté guardado con espacios o +51
-        order = request.env['trainyl.order'].sudo().search([
+        orders = request.env['trainyl.order'].sudo().search([
             ('phone', 'ilike', '%' + short_phone),
-            ('whatsapp_bot_status', 'in', ['sent', 'notified'])
-        ], limit=1, order='id desc')
+            ('whatsapp_bot_status', 'in', ['sent', 'notified']),
+            ('delivery_date', '=', fields.Date.today()),  # Solo de hoy
+            ('latitude', '=', False),  # Sin latitud
+            ('longitude', '=', False),  # Sin longitud
+            ('google_maps_url', '=', False)  # Sin URL
+        ], order='id desc')
 
-        if order:
+        if orders:
             try:
-                # Llamamos al método del modelo pasándole solo los datos técnicos (con sudo)
-                success = order.sudo().update_location_from_bot(lat, lon, maps_url)
-                if success:
-                    _logger.info(f"✅ Ubicación guardada para la orden: {order.order_number}")
-                    return {'status': 'success', 'order_number': order.order_number}
+                updated_orders = []
+                # Actualizar TODAS las órdenes encontradas
+                for order in orders:
+                    success = order.sudo().update_location_from_bot(lat, lon, maps_url)
+                    if success:
+                        updated_orders.append(order.order_number)
+                        _logger.info(f"✅ Ubicación guardada para la orden: {order.order_number}")
+                
+                if updated_orders:
+                    return {'status': 'success', 'orders': updated_orders, 'count': len(updated_orders)}
                 else:
-                    _logger.error(f"❌ update_location_from_bot retornó False para orden: {order.order_number}")
-                    return {'status': 'error', 'message': 'Failed to update location'}
+                    _logger.error(f"❌ No se pudo actualizar ninguna orden")
+                    return {'status': 'error', 'message': 'Failed to update locations'}
             except Exception as e:
                 _logger.error(f"❌ Exception en update_location_from_bot: {str(e)}")
                 return {'status': 'error', 'message': str(e)}
@@ -67,7 +76,7 @@ class TrainylBotController(http.Controller):
         orders = request.env['trainyl.order'].sudo().search_read([
             ('delivery_date', '=', today),
             ('whatsapp_bot_status', '=', 'sent')
-        ], ['id', 'order_number', 'fullname', 'phone'])
+        ], ['id', 'order_number', 'fullname', 'phone', 'address', 'district', 'partner_id'])
         
         return {'status': 'success', 'orders': orders}
 
