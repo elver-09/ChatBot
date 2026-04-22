@@ -80,4 +80,32 @@ const markWhatsAppAsSent = async (order_id) => {
     }
 };
 
-module.exports = { getOrdersForToday, updateTrainylOrderLocation, markWhatsAppAsSent };
+const getReminderOrders = async () => {
+    try {
+        const response = await api.post('/api/bot/get_reminder_orders', { jsonrpc: "2.0", params: {} });
+        const orders = response.data.result.orders || [];
+        console.log(`📬 getReminderOrders retornó ${orders.length} órdenes:`, JSON.stringify(orders, null, 2));
+        return orders;
+    } catch (error) {
+        console.error('❌ Error API get_reminder_orders:', error.message);
+        if (error.response?.data) {
+            console.error('   Respuesta Odoo:', JSON.stringify(error.response.data, null, 2));
+        }
+        return [];
+    }
+};
+
+const incrementReminderCount = async (order_id) => {
+    try {
+        const response = await api.post('/api/bot/increment_reminder_count', {
+            jsonrpc: "2.0",
+            params: { order_id: order_id }
+        });
+        return response.data?.result?.status === 'success';
+    } catch (error) {
+        console.error('❌ Error API increment_reminder_count:', error.message);
+        return false;
+    }
+};
+
+module.exports = { getOrdersForToday, updateTrainylOrderLocation, markWhatsAppAsSent, getReminderOrders, incrementReminderCount };

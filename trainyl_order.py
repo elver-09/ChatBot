@@ -159,8 +159,11 @@ class TrainylOrder(models.Model):
     whatsapp_bot_status = fields.Selection([
         ('pending', 'Pendiente (Ignorar)'),
         ('sent', 'Autorizado para Enviar'), # 👈 Tú seleccionas este en Odoo
-        ('notified', 'Mensaje Enviado por el Bot') # 👈 El bot lo cambia a este
+        ('notified', 'Mensaje Enviado - Esperando Respuesta'), # 👈 Bot envió primer mensaje
+        ('location_received', 'Ubicación Recibida - Completado') # 👈 Cliente respondió con ubicación
     ], string='Estado WhatsApp Bot', default='pending', tracking=True)
+    
+    reminder_count = fields.Integer(string='Cantidad de Recordatorios', default=0, help='Contador de recordatorios enviados (máximo 2)')
 
     def _sync_route_cart_line_state(self):
         """

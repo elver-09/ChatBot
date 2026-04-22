@@ -2,7 +2,7 @@ const { createBot, createProvider, createFlow, addKeyword, EVENTS } = require('@
 const BaileysProvider = require('@bot-whatsapp/provider/baileys');
 const MockAdapter = require('@bot-whatsapp/database/mock');
 const cron = require('node-cron');
-const { updateTrainylOrderLocation, getOrdersForToday, markWhatsAppAsSent } = require('./odooService');
+const { updateTrainylOrderLocation, getOrdersForToday, markWhatsAppAsSent, getReminderOrders, incrementReminderCount } = require('./odooService');
 
 const RECENT_TTL_MS = 30 * 60 * 1000;
 const recentNotifiedPhones = new Map();
@@ -23,13 +23,33 @@ const pickBestPhone = (candidates = []) => {
         .map((v) => normalizeDigits(String(v).split('@')[0]))
         .filter(Boolean);
 
-    // Priorizar formato Perú: 51 + 9 dígitos
+    // Priorizar formato Perú: 51 + 9 dígitos (EXACTAMENTE 11 dígitos totales)
     const pe = cleaned.find((n) => /^51\d{9}$/.test(n));
-    if (pe) return pe;
+    if (pe) {
+        console.log(`✅ pickBestPhone: Número Perú válido encontrado: ${pe}`);
+        return pe;
+    }
 
-    // Fallback internacional razonable
-    const intl = cleaned.find((n) => /^\d{10,15}$/.test(n));
-    return intl || '';
+    // Fallback: móvil local sin 51 (9 + 8 dígitos)
+    const localMobile = cleaned.find((n) => /^9\d{8}$/.test(n));
+    if (localMobile) {
+        const withPrefix = `51${localMobile}`;
+        console.log(`✅ pickBestPhone: Móvil local convertido a: ${withPrefix}`);
+        return withPrefix;
+    }
+
+    // Rechazar LIDs y números muy largos (> 15 dígitos)
+    const valid = cleaned.filter((n) => n.length <= 15);
+    
+    // Fallback internacional razonable (10-15 dígitos)
+    const intl = valid.find((n) => /^\d{10,15}$/.test(n));
+    if (intl) {
+        console.log(`✅ pickBestPhone: Número internacional: ${intl}`);
+        return intl;
+    }
+
+    console.log(`⚠️ pickBestPhone: No se encontró número válido. Candidatos: ${JSON.stringify(cleaned)}`);
+    return '';
 };
 
 const extractPhoneFromCtx = (ctx = {}) => {
@@ -90,16 +110,27 @@ const getRecentCandidatePhones = () => {
 const resolvePhoneForLocation = async (ctx = {}) => {
     const extracted = extractPhoneFromCtx(ctx);
     const peru = toPeruPhone(extracted);
-    if (peru) return peru;
+    
+    // Si extrajimos un número Perú válido, usarlo
+    if (peru) {
+        console.log(`✅ resolvePhoneForLocation: Número Perú extraído: ${peru}`);
+        return peru;
+    }
+
+    // Si el número extraído es un LID largo, ignorarlo y usar fallbacks
+    const isLID = extracted && extracted.length > 15;
+    if (isLID) {
+        console.log(`⚠️ resolvePhoneForLocation: Número parece ser LID (${extracted}), usando fallbacks...`);
+    }
 
     // Fallback 1: destinatarios notificados recientemente
     const recentCandidates = getRecentCandidatePhones();
     if (recentCandidates.length === 1) {
-        console.log('ℹ️ Fallback de número aplicado desde envío reciente:', recentCandidates[0]);
+        console.log(`✅ resolvePhoneForLocation: Fallback 1 - Número reciente: ${recentCandidates[0]}`);
         return recentCandidates[0];
     }
 
-    // Fallback: cuando WhatsApp envía LID en vez de número telefónico.
+    // Fallback 2: única orden del día
     const orders = await getOrdersForToday();
     const validPhones = (orders || [])
         .map((o) => toPeruPhone(o?.phone))
@@ -107,10 +138,17 @@ const resolvePhoneForLocation = async (ctx = {}) => {
 
     const uniquePhones = [...new Set(validPhones)];
     if (uniquePhones.length === 1) {
-        console.log('ℹ️ Fallback de número aplicado desde orden única del día:', uniquePhones[0]);
+        console.log(`✅ resolvePhoneForLocation: Fallback 2 - Única orden del día: ${uniquePhones[0]}`);
         return uniquePhones[0];
     }
 
+    // Si hay múltiples órdenes, preferir el número reciente sobre el extraído (si parece LID)
+    if (isLID && recentCandidates.length > 0) {
+        console.log(`✅ resolvePhoneForLocation: Fallback 3 - Usando número reciente (LID detectado)`);
+        return recentCandidates[0];
+    }
+
+    console.log(`⚠️ resolvePhoneForLocation: No se pudo determinar número. Extraído: ${extracted}, Recientes: ${recentCandidates.length}, Órdenes hoy: ${uniquePhones.length}`);
     return extracted;
 };
 
@@ -198,11 +236,16 @@ const main = async () => {
         
         try {
             const orders = await getOrdersForToday();
-            if (orders.length === 0) return;
+            console.log(`📦 getOrdersForToday retornó ${orders.length} órdenes`);
+            if (orders.length === 0) {
+                console.log('ℹ️ No hay órdenes para enviar');
+                return;
+            }
 
             console.log(`📦 Procesando ${orders.length} órdenes...`);
 
             for (const order of orders) {
+                console.log(`📬 Orden: ${order.order_number} | Teléfono: ${order.phone}`);
                 if (order.phone) {
                     const phoneStr = String(order.phone).replace(/\D/g, '');
                     const finalPhone = phoneStr.startsWith('51') ? phoneStr : `51${phoneStr}`;
@@ -214,18 +257,56 @@ const main = async () => {
                     const mensaje = `¡Hola ${nombre}! 👋\nSomos el equipo de entregas de *Trainyl* 🚚\nEstamos preparando la entrega de tu pedido *${order.order_number}*.\n📌 *Dirección registrada:* ${address}\n📌 *Distrito:* ${district}\n📍 Para que nuestro motorizado te ubique fácilmente, por favor comparte tu ubicación usando el botón 📎\n¡Gracias! 💚\n— Equipo de entregas Trainyl`;
                     
                     try {
+                        console.log(`📨 Enviando mensaje a ${jid}...`);
                         await adapterProvider.sendText(jid, mensaje);
                         rememberRecentPhone(finalPhone);
-                        await markWhatsAppAsSent(order.id);
-                        console.log(`✅ Primer mensaje enviado a: ${finalPhone}`);
+                        console.log(`✅ Mensaje enviado. Ahora llamando a markWhatsAppAsSent(${order.id})...`);
+                        const marked = await markWhatsAppAsSent(order.id);
+                        console.log(`✅ markWhatsAppAsSent retornó: ${marked}`);
                     } catch (err) {
-                        console.log(`❌ Error enviando a ${finalPhone}`);
+                        console.log(`❌ Error enviando a ${finalPhone}:`, err.message);
                     }
                     await new Promise(r => setTimeout(r, 5000));
                 }
             }
         } catch (error) {
             console.error('❌ Error en el CRON:', error);
+        }
+    });
+
+    // --- CRON: ENVÍO DE RECORDATORIOS (cada 5 minutos - PRUEBA) ---
+    cron.schedule('*/3 * * * *', async () => {
+        console.log('⏳ CRON RECORDATORIO: Buscando órdenes que necesitan recordatorio...');
+        
+        try {
+            const reminders = await getReminderOrders();
+            if (reminders.length === 0) return;
+
+            console.log(`📬 Enviando recordatorios a ${reminders.length} clientes...`);
+
+            for (const order of reminders) {
+                if (order.phone) {
+                    const phoneStr = String(order.phone).replace(/\D/g, '');
+                    const finalPhone = phoneStr.startsWith('51') ? phoneStr : `51${phoneStr}`;
+                    const jid = `${finalPhone}@s.whatsapp.net`;
+                    const nombre = (order.fullname || 'Cliente').split(' ')[0];
+                    const reminderNum = (order.reminder_count || 0) + 1;
+
+                    const mensaje = `¡Hola ${nombre}! 👋\n\nAún no hemos recibido tu ubicación para el pedido *${order.order_number}*.\n\n📍 Por favor comparte tu ubicación usando el botón 📎 para que nuestro motorizado pueda ubicarte sin inconvenientes.\n\n¡Gracias!\n— Equipo de entregas Trainyl 💚`;
+                    
+                    try {
+                        await globalAdapterProvider.sendText(jid, mensaje);
+                        // Incrementar contador solo si se envió exitosamente
+                        await incrementReminderCount(order.id);
+                        console.log(`✅ Recordatorio #${reminderNum} enviado a: ${finalPhone} (${order.order_number})`);
+                    } catch (err) {
+                        console.log(`❌ Error enviando recordatorio a ${finalPhone}`);
+                    }
+                    await new Promise(r => setTimeout(r, 3000));
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error en el CRON de recordatorios:', error);
         }
     });
 };
