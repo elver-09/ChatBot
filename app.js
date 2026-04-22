@@ -253,14 +253,23 @@ const main = async () => {
                     const nombre = (order.fullname || 'Cliente').split(' ')[0];
                     const address = order.address || 'No especificada';
                     const district = order.district || 'No especificado';
+                    const partnerName = order['partner_id.name'] || 'Trainyl';
 
-                    const mensaje = `¡Hola ${nombre}! 👋\nSomos el equipo de entregas de *Trainyl* 🚚\nEstamos preparando la entrega de tu pedido *${order.order_number}*.\n📌 *Dirección registrada:* ${address}\n📌 *Distrito:* ${district}\n📍 Para que nuestro motorizado te ubique fácilmente, por favor comparte tu ubicación usando el botón 📎\n¡Gracias! 💚\n— Equipo de entregas Trainyl`;
+                    const mensaje = `¡Hola ${nombre}! 👋\nSomos el equipo de entregas de *Trainyl* 🚚\nEstamos preparando la entrega de tu pedido *${order.order_number}* (${partnerName}).\n📌 *Dirección registrada:* ${address}\n📌 *Distrito:* ${district}\n📍 Para que nuestro motorizado te ubique fácilmente, por favor comparte tu ubicación usando el botón 📎\n¡Gracias! 💚\n— Equipo de entregas Trainyl`;
                     
                     try {
                         console.log(`📨 Enviando mensaje a ${jid}...`);
-                        await adapterProvider.sendText(jid, mensaje);
+                        // Usar el socket de Baileys directamente en lugar de sendText
+                        const sock = adapterProvider.vendor?.sock || adapterProvider.vendor;
+                        if (sock && sock.sendMessage) {
+                            await sock.sendMessage(jid, { text: mensaje });
+                            console.log(`✅ Mensaje enviado con Baileys directamente`);
+                        } else {
+                            await adapterProvider.sendText(jid, mensaje);
+                            console.log(`✅ Mensaje enviado con sendText`);
+                        }
                         rememberRecentPhone(finalPhone);
-                        console.log(`✅ Mensaje enviado. Ahora llamando a markWhatsAppAsSent(${order.id})...`);
+                        console.log(`✅ Ahora llamando a markWhatsAppAsSent(${order.id})...`);
                         const marked = await markWhatsAppAsSent(order.id);
                         console.log(`✅ markWhatsAppAsSent retornó: ${marked}`);
                     } catch (err) {
@@ -291,16 +300,26 @@ const main = async () => {
                     const jid = `${finalPhone}@s.whatsapp.net`;
                     const nombre = (order.fullname || 'Cliente').split(' ')[0];
                     const reminderNum = (order.reminder_count || 0) + 1;
+                    const partnerName = order['partner_id.name'] || 'Trainyl';
 
-                    const mensaje = `¡Hola ${nombre}! 👋\n\nAún no hemos recibido tu ubicación para el pedido *${order.order_number}*.\n\n📍 Por favor comparte tu ubicación usando el botón 📎 para que nuestro motorizado pueda ubicarte sin inconvenientes.\n\n¡Gracias!\n— Equipo de entregas Trainyl 💚`;
+                    const mensaje = `¡Hola ${nombre}! 👋\n\nAún no hemos recibido tu ubicación para el pedido *${order.order_number}* (${partnerName}).\n\n📍 Por favor comparte tu ubicación usando el botón 📎 para que nuestro motorizado pueda ubicarte sin inconvenientes.\n\n¡Gracias!\n— Equipo de entregas Trainyl 💚`;
                     
                     try {
-                        await globalAdapterProvider.sendText(jid, mensaje);
+                        console.log(`📨 Enviando recordatorio a ${jid}...`);
+                        // Usar el socket de Baileys directamente en lugar de sendText
+                        const sock = globalAdapterProvider.vendor?.sock || globalAdapterProvider.vendor;
+                        if (sock && sock.sendMessage) {
+                            await sock.sendMessage(jid, { text: mensaje });
+                            console.log(`✅ Recordatorio enviado con Baileys directamente`);
+                        } else {
+                            await globalAdapterProvider.sendText(jid, mensaje);
+                            console.log(`✅ Recordatorio enviado con sendText`);
+                        }
                         // Incrementar contador solo si se envió exitosamente
                         await incrementReminderCount(order.id);
                         console.log(`✅ Recordatorio #${reminderNum} enviado a: ${finalPhone} (${order.order_number})`);
                     } catch (err) {
-                        console.log(`❌ Error enviando recordatorio a ${finalPhone}`);
+                        console.log(`❌ Error enviando recordatorio a ${finalPhone}:`, err.message);
                     }
                     await new Promise(r => setTimeout(r, 3000));
                 }

@@ -80,6 +80,13 @@ class TrainylBotController(http.Controller):
             ('whatsapp_bot_status', '=', 'sent')
         ], ['id', 'order_number', 'fullname', 'phone', 'address', 'district', 'partner_id'])
         
+        # Extraer el nombre del cliente desde partner_id (viene como [id, name])
+        for order in orders:
+            if order.get('partner_id') and isinstance(order['partner_id'], (list, tuple)) and len(order['partner_id']) > 1:
+                order['partner_id.name'] = order['partner_id'][1]  # Nombre del cliente
+            else:
+                order['partner_id.name'] = 'Trainyl'  # Fallback
+        
         return {'status': 'success', 'orders': orders}
 
     @http.route('/api/bot/get_reminder_orders', type='json', auth='none', methods=['POST'], csrf=False)
@@ -111,12 +118,14 @@ class TrainylBotController(http.Controller):
             ('google_maps_url', '=', False),  # Sin URL
             ('write_date', '<=', time_threshold),  # Escribida ANTES del umbral = hace más de 30 minutos
             ('reminder_count', '<', 2)  # Máximo 2 recordatorios
-        ], ['id', 'order_number', 'fullname', 'phone', 'reminder_count', 'write_date'])
+        ], ['id', 'order_number', 'fullname', 'phone', 'reminder_count', 'write_date', 'partner_id'])
         
-        _logger.info(f"✅ Encontradas {len(orders)} órdenes para recordatorio")
-        if orders:
-            for order in orders:
-                _logger.info(f"   - Orden {order['order_number']}: {order['fullname']} | Recordatorios: {order['reminder_count']} | Última actualización: {order['write_date']}")
+        # Extraer el nombre del cliente desde partner_id (viene como [id, name])
+        for order in orders:
+            if order.get('partner_id') and isinstance(order['partner_id'], (list, tuple)) and len(order['partner_id']) > 1:
+                order['partner_id.name'] = order['partner_id'][1]  # Nombre del cliente
+            else:
+                order['partner_id.name'] = 'Trainyl'  # Fallback
         
         return {'status': 'success', 'orders': orders}
 
