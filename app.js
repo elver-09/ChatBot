@@ -30,7 +30,7 @@ const main = async () => {
         console.log('📡 Cron programado cada 3 minutos para pruebas.');
 
         // CRON: Ejecución cada 3 minutos
-        cron.schedule('* * * * *', async () => {
+        cron.schedule('*/2 * * * *', async () => {
             console.log('🤖 Cron: Revisando pendientes en Odoo...');
             
             try {

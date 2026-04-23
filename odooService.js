@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const ODOO_URL = 'https://trainyl.digilab.pe';
-const API_TOKEN = 'MiTokenSecreto123'; // <--- El token que usabas en tus archivos
+const API_TOKEN = 'MiTokenSecreto123';
 
 const api = axios.create({
     baseURL: ODOO_URL,
@@ -15,7 +15,6 @@ const api = axios.create({
 const getOrdersForBot = async () => {
     try {
         const response = await api.post('/api/bot/get_orders', { jsonrpc: "2.0", params: {} });
-        // Importante: Verificamos la ruta de los datos en el JSON de Odoo
         return response.data.result.orders || [];
     } catch (error) {
         console.error('❌ Error API get_orders:', error.message);
