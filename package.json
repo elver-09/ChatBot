@@ -10,11 +10,11 @@
     "dependencies": {
         "@bot-whatsapp/bot": "^0.1.38",
         "@bot-whatsapp/cli": "latest",
-        "@bot-whatsapp/database": "latest",
+        "@bot-whatsapp/database": "^0.1.38",
         "@bot-whatsapp/portal": "latest",
         "@bot-whatsapp/provider": "^0.1.38",
         "@whiskeysockets/baileys": "6.6.0",
-        "axios": "^1.15.1",
+        "axios": "^1.15.2",
         "cache-manager": "5.2.4",
         "node-cron": "^4.2.1",
         "odoo-xmlrpc": "^1.0.8",
